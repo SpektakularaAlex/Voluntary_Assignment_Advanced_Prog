@@ -1,13 +1,22 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Cookie, Response, HTTPException
 from pydantic import BaseModel
-from MA4_vol import fac, fib, statement, assignment, expression, term, factor, factor
+from MA4_vol import statement, CalculatorSyntaxError, EvaluationError
+from tokenize import TokenError
+# from MA4_vol import statement, assignment, expression, term, factor, factor, fac, fib
 from MA4tokenizer_vol import TokenizeWrapper
+import uuid #Makes random ids
+import math
 
 app = FastAPI()
 
+sessions = {}
+
 class StatementRequest(BaseModel):
     data: str
-    vars: dict[str, float] = {}
+    # vars: dict[str, float] = {"ans": 0.0, "PI": math.pi, "E": math.e}
+
+#Response is used to reach the header of the reply from the server. Return usually just gives back the body of the reply and Response allows us to acess the header. 
+    
 
 
 class Item(BaseModel):
@@ -24,19 +33,41 @@ def read_root():
 def multiply_numb(number: int):
     return {"result": 3*number}
 
-
-# @app.post("/statement/{data, variables}")
-# def state(data: str, variables: str):
-#     return {statement(data, variables)}
-
+def get_variables(session_id, response):
+    if session_id is None or session_id not in sessions:
+        session_id = str(uuid.uuid4())
+        sessions[session_id] = {"ans": 0.0, "PI": math.pi, "E": math.e}
+        response.set_cookie(key="session_id", value=session_id)
+    return sessions[session_id]
 
 
 @app.post("/statement")
-def state(req: StatementRequest):
-    wtok = TokenizeWrapper(req.data)
-    return {statement(wtok, req.vars)}
-    # return {"data": req.data, "vars": req.vars}
+def state(req: StatementRequest, response: Response, session_id: str | None = Cookie(default=None)):
+    variables = get_variables(session_id, response)
+    try:
+        wtok = TokenizeWrapper(req.data)
+        result = statement(wtok, variables)
+    except CalculatorSyntaxError as se:
+        raise HTTPException(status_code=400, detail=(
+            f"Syntax error: {se}. Error occurred at '{wtok.get_current()}' "
+            f"just after '{wtok.get_previous()}'"))
+    except EvaluationError as ee:
+        raise HTTPException(status_code=400, detail=(
+            f"Evaluation error: {ee}. Error occurred at '{wtok.get_current()}' "
+            f"just after '{wtok.get_previous()}'"))
+    except TokenError:
+        raise HTTPException(status_code=400,
+                            detail="Syntax error: Unbalanced parentheses")
+    # wtok = TokenizeWrapper(req.data)
+    # # variables.update(req.vars)
+    # result = statement(wtok, variables)
+    return {"value": result}
+    # return {"value": result, "vars": variables}
 
+
+@app.get("/vars")
+def state(response: Response, session_id: str | None = Cookie(default=None)):
+    return get_variables(session_id, response)
 
 
 @app.get("/items/{item_id}")
