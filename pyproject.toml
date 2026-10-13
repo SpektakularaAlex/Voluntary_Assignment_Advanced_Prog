@@ -1,0 +1,19 @@
+[project]
+name = "voluntary-assignment-advanced-prog"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { email = "alexxxxander@gmail.com" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi[standard]>=0.143.0",
+]
+
+[project.scripts]
+voluntary-assignment-advanced-prog = "voluntary_assignment_advanced_prog:main"
+
+[build-system]
+requires = ["uv_build>=0.13.0,<0.14.0"]
+build-backend = "uv_build"
