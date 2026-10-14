@@ -29,9 +29,9 @@ class Item(BaseModel):
 def read_root():
     return {"Numerical Calculator"}
 
-@app.post("/multiply/{number}")
-def multiply_numb(number: int):
-    return {"result": 3*number}
+# @app.post("/multiply/{number}")
+# def multiply_numb(number: int):
+#     return {"result": 3*number}
 
 def get_variables(session_id, response):
     if session_id is None or session_id not in sessions:
@@ -42,7 +42,7 @@ def get_variables(session_id, response):
 
 
 @app.post("/statement")
-def state(req: StatementRequest, response: Response, session_id: str | None = Cookie(default=None)):
+def post_statements(req: StatementRequest, response: Response, session_id: str | None = Cookie(default=None)):
     variables = get_variables(session_id, response)
     try:
         wtok = TokenizeWrapper(req.data)
@@ -66,18 +66,18 @@ def state(req: StatementRequest, response: Response, session_id: str | None = Co
 
 
 @app.get("/vars")
-def state(response: Response, session_id: str | None = Cookie(default=None)):
+def get_vars(response: Response, session_id: str | None = Cookie(default=None)):
     return get_variables(session_id, response)
 
 
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: str | None = None):
-    return {"item_id": item_id, "q": q}
+# @app.get("/items/{item_id}")
+# def read_item(item_id: int, q: str | None = None):
+#     return {"item_id": item_id, "q": q}
 
 
-@app.put("/items/{item_id}")
-def update_item(item_id: int, item: Item):
-    return {"item_name": item.name, "item_id": item_id}
+# @app.put("/items/{item_id}")
+# def update_item(item_id: int, item: Item):
+#     return {"item_name": item.name, "item_id": item_id}
 
 
 
